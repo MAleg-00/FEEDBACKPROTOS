@@ -1,0 +1,73 @@
+#include <DHT.h>
+#include <LiquidCrystal.h>
+
+#define DHTPIN A5
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+const int
+COOLER_PIN = 10, EXHAUST_PIN = 9;  //sets the array "COOLER_PIN" to automatically have the value of 10 and array "EXHAUST_PIN" to automatically have the value of 9 whenever one of them are typed in
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+int limitt = 26.67; int limith = 75;
+
+
+void setup() {
+  // serial monitor and dht sensor initialization, open the serial monitor
+  Serial.begin (9600);
+  dht.begin();
+  //lcd initialization
+  lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.clear();
+  //sets the pin equivalents to output pins
+  pinMode(COOLER_PIN, OUTPUT);  //10th DIGITAL PWM
+  pinMode(EXHAUST_PIN, OUTPUT); //9th DIGITAL PWM 
+
+}
+
+void loop() {
+  delay(1000);
+  float detectedt = dht.readTemperature();// puts the detected temp value into a string
+  float detectedh = dht.readHumidity();// puts the detected humidity vavlue into a string
+
+  if (isnan(detectedt) || isnan(detectedh)){
+    Serial.println(F("Failed to read from DHT")); //if the board doesn't detect anything from the DHT, it will display this to the serial monitor 
+    return;
+  }
+    //OUTPUTS OF THE SYSTEM BASED ON THE DETECTED PARAMETERS
+      if (round(detectedt) > round(limitt)) digitalWrite(COOLER_PIN, LOW); //if the detected temp is higher than the limit, the fan will turn on until the detected temp is lower than 26.67 celcius
+      else digitalWrite(COOLER_PIN,HIGH);
+
+      if (round(detectedt) > round(limitt)) Serial.print("Cooler on   "); //checker of cooler fan status in serial monitor
+      else Serial.print("Cooler off   ");
+
+      if (round(detectedh) > round(limith)) digitalWrite(EXHAUST_PIN, LOW); //if the detected humidity is higher than the limit, the fan will turn on until the detected humidity is lower than 75%
+      else digitalWrite(EXHAUST_PIN,HIGH);
+
+      if (round(detectedh) > round(limith)) Serial.print("Exhaust on   "); //checker of exhaust fan status in serial monitor
+      else Serial.print("Exhaust off   ");
+
+  Serial.print(F("Temperature: ")); //these are displays for the SERIAL MONITOR, NOT LCD
+  Serial.print(detectedt);
+  Serial.print(F("°C    "));
+  Serial.print(F("Humidity: "));
+  Serial.print(detectedh);
+  Serial.println("%");
+
+  //LCD OUTPUTS
+  lcd.setCursor(0,0);//lcd print for detected temperature
+  lcd.print("Temp: ");
+  lcd.print(detectedt);
+  lcd.print((char)223);
+  lcd.print("C");
+
+  lcd.setCursor(0,1);//lcd print for detected humidity
+  lcd.print("Hum: ");
+  lcd.print(detectedh);
+  lcd.print("%");
+
+
+}
